@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,23 +21,25 @@ namespace TCPServerApplication
                 Console.Write("Waiting for a client to connect");
                 Thread.Sleep(500);
             }
-            Console.WriteLine("First client connected");
             server.MessageReceived += Server_MessageReceived;
             Console.ReadLine();
         }
 
         private static void Server_MessageReceived(object sender, EventArgs e)
         {
+            Socket currentSocket = (Socket)sender;
+            string textToSend = "";
             if (server.IncomingText == "get time")
             {
-                server.SendString(DateTime.Now.TimeOfDay.ToString());
+                textToSend = DateTime.Now.ToLongTimeString();
                 Console.WriteLine("Time sent to client");
             }
             else
             {
-                server.SendString("Send another request");
+                textToSend = "Send another request";
                 Console.WriteLine("Invalid request");
             }
+            currentSocket.Send(Encoding.ASCII.GetBytes(textToSend));
         }
     }
 }

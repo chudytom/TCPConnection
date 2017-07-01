@@ -103,6 +103,25 @@ namespace TCPConnection
             }
         }
 
+        protected void ReceiveResponse(Socket socket)
+        {
+            try
+            {
+                socket.BeginReceive(incomingBuffer, 0, BUFFER_SIZE, SocketFlags.None, new AsyncCallback(ReceiveCallback), socket);
+                Thread.Sleep(200);
+            }
+            catch (SocketException)
+            {
+                CloseConnection("This error");
+                //StartConnection();
+                Thread.Sleep(3000);
+            }
+            catch (Exception)
+            {
+                CloseConnection("Sudden connection lost");
+            }
+        }
+
         protected void ReceiveCallback(IAsyncResult AR)
         {
             Socket currentSocket = (Socket)AR.AsyncState;
@@ -125,8 +144,8 @@ namespace TCPConnection
             Array.Copy(incomingBuffer, tempBuffer, receivedBytesCount);
             string text = Encoding.ASCII.GetString(tempBuffer);
             IncomingText = text;
-            InvokeMessageReceived(EventArgs.Empty);
-            ReceiveResponse();
+            InvokeMessageReceived(currentSocket, EventArgs.Empty);
+            ReceiveResponse(currentSocket);
         }
 
         public static bool IsIPFormatCorrect(string ipString)
@@ -161,11 +180,12 @@ namespace TCPConnection
             OutputText = textToDisplay;
         }
 
-        public void InvokeMessageReceived(EventArgs e)
+        public void InvokeMessageReceived(Socket currentSocket, EventArgs e)
         {
-            MessageReceived?.Invoke(this, e);
+            MessageReceived?.Invoke(currentSocket, e);
         }
 
         public event EventHandler MessageReceived;
+
     }
 }

@@ -42,7 +42,8 @@ namespace TCPConnection
 
             clientSockets.Add(currentSocket);
             IsConnected = true;
-            ReceiveResponse();
+            ReceiveResponse(currentSocket);
+            //ReceiveResponse();
             Console.WriteLine("Client connected, waiting for request");
             mainSocket.BeginAccept(AcceptCallback, null);
         }

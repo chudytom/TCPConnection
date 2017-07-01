@@ -13,7 +13,7 @@ namespace TCPClientApplication
         static void Main(string[] args)
         {
             TCPlient client = new TCPlient(100);
-            //client.Start();
+            //If we move this line to the loop it gets crashed because of access to a removed object
             client.StartConnection();
             while (!client.IsConnected)
             {
@@ -24,7 +24,7 @@ namespace TCPClientApplication
             Console.SetCursorPosition(0, Console.CursorTop + 1);
             Console.WriteLine("Connected to the server");
             string text = "";
-            while (text!="exit")
+            while (text != "exit")
             {
                 text = Console.ReadLine();
                 if (text == "exit") return;
