@@ -48,14 +48,18 @@ namespace TCPConnection
             catch (SocketException)
             {
                 OutputText = "Cannot connect to the server (end, SocketException)";
+                CloseConnection();
                 return;
             }
-            catch (ArgumentException)
+            finally
             {
-                OutputText = "Cannot connect to the server(end, ArgumentException)";
-                return;
+                IsConnected = mainSocket.Connected;
             }
-            IsConnected = mainSocket.Connected;
+            //catch (ArgumentException)
+            //{
+            //    OutputText = "Cannot connect to the server(end, ArgumentException)";
+            //    return;
+            //}
             ReceiveResponse();
             OutputText = "Connected";
         }
@@ -94,7 +98,6 @@ namespace TCPConnection
             catch (SocketException)
             {
                 CloseConnection("This error");
-                //StartConnection();
                 Thread.Sleep(3000);
             }
             catch (Exception)
@@ -113,7 +116,6 @@ namespace TCPConnection
             catch (SocketException)
             {
                 CloseConnection("This error");
-                //StartConnection();
                 Thread.Sleep(3000);
             }
             catch (Exception)
@@ -165,7 +167,7 @@ namespace TCPConnection
         {
             IsConnected = false;
             mainSocket.Close();
-            mainSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            //mainSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             // Always Shutdown before closing
             //current.Shutdown(SocketShutdown.Both);
             //current.Close();

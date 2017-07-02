@@ -14,12 +14,12 @@ namespace TCPClientApplication
         {
             TCPlient client = new TCPlient(100);
             //If we move this line to the loop it gets crashed because of access to a removed object
-            client.StartConnection();
             while (!client.IsConnected)
             {
+                client.StartConnection();
                 Console.SetCursorPosition(0, Console.CursorTop);
                 Console.Write("Connecting to the server");
-                Thread.Sleep(500);
+                Thread.Sleep(2000);
             }
             Console.SetCursorPosition(0, Console.CursorTop + 1);
             Console.WriteLine("Connected to the server");
