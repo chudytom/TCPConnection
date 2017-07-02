@@ -21,6 +21,7 @@ namespace TCPServerApplication
                 Console.Write("Waiting for a client to connect");
                 Thread.Sleep(500);
             }
+            Console.SetCursorPosition(0, Console.CursorTop + 1);
             server.MessageReceived += Server_MessageReceived;
             Console.ReadLine();
         }

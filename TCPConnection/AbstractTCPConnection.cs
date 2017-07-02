@@ -6,13 +6,14 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Net.NetworkInformation;
 
 namespace TCPConnection
 {
     public abstract class AbstractTCPConnection
     {
         protected Socket mainSocket;
-        public bool IsConnected { get; set; }
+        public bool IsConnected { get; protected set; }
         public string IP { get; set; } = IPAddress.Loopback.ToString();
         public int PortNumber { get; set; }
         //Decide which properties beneatch should be made available
@@ -48,7 +49,7 @@ namespace TCPConnection
             catch (SocketException)
             {
                 OutputText = "Cannot connect to the server (end, SocketException)";
-                CloseConnection();
+                //CloseConnection();
                 return;
             }
             finally
@@ -60,7 +61,7 @@ namespace TCPConnection
             //    OutputText = "Cannot connect to the server(end, ArgumentException)";
             //    return;
             //}
-            ReceiveResponse();
+            ReceiveResponse(mainSocket);
             OutputText = "Connected";
         }
 
@@ -69,43 +70,33 @@ namespace TCPConnection
             byte[] outgoingBuffer = Encoding.ASCII.GetBytes(stringToSend);
             try
             {
-                mainSocket.Send(outgoingBuffer, 0, outgoingBuffer.Length, SocketFlags.None);
+                mainSocket?.Send(outgoingBuffer, 0, outgoingBuffer.Length, SocketFlags.None);
             }
             catch (SocketException)
             {
                 OutputText = "Unable to send string (SocketException)";
-                mainSocket.Close();
                 return;
             }
             catch (ObjectDisposedException)
             {
-                OutputText = "Unable to send string (ObjectDisposedException)";
-                CloseConnection();
+                OutputText = "Unable to send string (SocketException)";
+                Point[] points = { new Point(100, 200),
+                         new Point(150, 250), new Point(250, 375),
+                         new Point(275, 395), new Point(295, 450) };
+
+                // Define the Predicate<T> delegate.
+                Predicate<Point> predicate = FindPoints;
+                bool FindPoints(Point obj)
+                {
+                    return obj.X * obj.Y > 100000;
+                }
                 return;
             }
         }
-
         /// <summary>
-        /// BeginReceive with exception handling
+        /// BeginReceive method with exception handling
         /// </summary>
-        protected void ReceiveResponse()
-        {
-            try
-            {
-                mainSocket.BeginReceive(incomingBuffer, 0, BUFFER_SIZE, SocketFlags.None, new AsyncCallback(ReceiveCallback), mainSocket);
-                Thread.Sleep(200);
-            }
-            catch (SocketException)
-            {
-                CloseConnection("This error");
-                Thread.Sleep(3000);
-            }
-            catch (Exception)
-            {
-                CloseConnection("Sudden connection lost");
-            }
-        }
-
+        /// <param name="socket"></param>
         protected void ReceiveResponse(Socket socket)
         {
             try
@@ -118,10 +109,10 @@ namespace TCPConnection
                 CloseConnection("This error");
                 Thread.Sleep(3000);
             }
-            catch (Exception)
-            {
-                CloseConnection("Sudden connection lost");
-            }
+            //catch (Exception)
+            //{
+            //    CloseConnection("Sudden connection lost");
+            //}
         }
 
         protected void ReceiveCallback(IAsyncResult AR)
@@ -134,11 +125,16 @@ namespace TCPConnection
             }
             catch (SocketException)
             {
-                CloseConnection("Couldn't receive the message(SocketException)");
+                //mainSocket.Disconnect(true);
+                //IsConnected = false;
+                if (IsConnected == true)
+                    CloseConnection("Couldn't receive the message(SocketException)");
                 return;
             }
             catch (ObjectDisposedException)
             {
+                //mainSocket.Disconnect(true);
+                //IsConnected = false;
                 CloseConnection("Couldn't receive the message(ObjDisposed)");
                 return;
             }
@@ -146,7 +142,7 @@ namespace TCPConnection
             Array.Copy(incomingBuffer, tempBuffer, receivedBytesCount);
             string text = Encoding.ASCII.GetString(tempBuffer);
             IncomingText = text;
-            InvokeMessageReceived(currentSocket, EventArgs.Empty);
+            OnMessageReceived(currentSocket, EventArgs.Empty);
             ReceiveResponse(currentSocket);
         }
 
@@ -156,24 +152,19 @@ namespace TCPConnection
             {
                 return false;
             }
-            string[] splitIP = ipString.Split('.');
-            if (splitIP.Length != 4)
+            string[] ipAfterSplit = ipString.Split('.');
+            if (ipAfterSplit.Length != 4)
             {
                 return false;
             }
-            return splitIP.All(splitNumber => byte.TryParse(splitNumber, out byte byteTester));
+            return ipAfterSplit.All(splitNumber => byte.TryParse(splitNumber, out byte byteTester));
         }
         public void CloseConnection()
         {
             IsConnected = false;
-            mainSocket.Close();
-            //mainSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            // Always Shutdown before closing
-            //current.Shutdown(SocketShutdown.Both);
-            //current.Close();
-            //clientSockets.Remove(current);
-            //Console.WriteLine("Client disconnected");
-            //return;
+            mainSocket.Shutdown(SocketShutdown.Both);
+            mainSocket.Disconnect(false);
+            OnDisconnected(this, EventArgs.Empty);
         }
 
         protected void CloseConnection(string textToDisplay)
@@ -182,12 +173,16 @@ namespace TCPConnection
             OutputText = textToDisplay;
         }
 
-        public void InvokeMessageReceived(Socket currentSocket, EventArgs e)
+        public event EventHandler MessageReceived;
+        protected void OnMessageReceived(Socket currentSocket, EventArgs e)
         {
             MessageReceived?.Invoke(currentSocket, e);
         }
 
-        public event EventHandler MessageReceived;
-
+        public event EventHandler Disconnected;
+        protected void OnDisconnected(object sender, EventArgs e)
+        {
+            Disconnected?.Invoke(sender, e);
+        }
     }
 }
