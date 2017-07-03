@@ -13,14 +13,14 @@ namespace TCPClientApplication
         static void Main(string[] args)
         {
             TCPlient client = new TCPlient(portNumber: 100);
-            string text = "";
-            System.Timers.Timer timer = new System.Timers.Timer(1000);
+            //System.Timers.Timer timer = new System.Timers.Timer(1000);
             client.Disconnected += Client_Disconnected;
+            client.MessageReceived += Client_MessageReceived;
             while (true)
             {
-                timer.Elapsed += Timer_Elapsed;
+                //timer.Elapsed += Timer_Elapsed;
                 Console.WriteLine("Type 'connect' to get connected");
-                text = Console.ReadLine();
+                string text = Console.ReadLine();
                 //timer.Start();
                 if (text.ToLower() != "connect") continue;
                 while (!client.IsConnected)
@@ -33,7 +33,7 @@ namespace TCPClientApplication
                 Console.SetCursorPosition(0, Console.CursorTop + 1);
                 Console.WriteLine("Connected to the server");
 
-                timer.Start();
+                //timer.Start();
                 while (text != "exit")
                 {
                     if (!client.IsConnected) break;
@@ -42,23 +42,24 @@ namespace TCPClientApplication
                     else
                     {
                         client.SendString(text);
-                        Thread.Sleep(100);
-                        Console.WriteLine(client.IncomingText);
                     }
                 }
-                timer.Stop();
-                void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-                {
-                    //client.SendString("");
-                }
+                //timer.Stop();
             }
-                void Client_Disconnected(object sender, EventArgs e)
-                {
-                    Console.WriteLine("Disconnected. Type 'exit'");
-                    timer.Stop();
-                }
+            //void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+            //{
+            //    //client.SendString("");
+            //}
+            void Client_Disconnected(object sender, EventArgs e)
+            {
+                Console.WriteLine("Disconnected. Type 'exit'");
+                //timer.Stop();
+            }
+            void Client_MessageReceived(object sender, EventArgs e)
+            {
+                Console.WriteLine(client.IncomingText);
+            }
         }
-
 
     }
 }
