@@ -11,7 +11,7 @@ namespace TCPServerApplication
 {
     class ServerApplication
     {
-        static TCPServer server = new TCPServer(100);
+        static TCPServer server = new TCPServer(10001);
         static void Main(string[] args)
         {
             server.StartConnection();
@@ -38,9 +38,10 @@ namespace TCPServerApplication
             else
             {
                 textToSend = "Send another request";
-                Console.WriteLine("Invalid request");
+                //Console.WriteLine("Invalid request");
+                Console.WriteLine(server.IncomingText);
             }
-            currentSocket.Send(Encoding.ASCII.GetBytes(textToSend));
+            //currentSocket.Send(Encoding.ASCII.GetBytes(textToSend));
         }
     }
 }

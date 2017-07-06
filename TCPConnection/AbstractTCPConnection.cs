@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Net.NetworkInformation;
 
 namespace TCPConnection
 {
@@ -23,6 +22,7 @@ namespace TCPConnection
         protected Socket mainSocket;
         protected const int BUFFER_SIZE = 1024;
         protected byte[] incomingBuffer = new byte[BUFFER_SIZE];
+        protected Pinger pinger;
         /// <summary>
         /// The default value of IPAdress is IPAddress.Loopback
         /// </summary>
@@ -54,6 +54,14 @@ namespace TCPConnection
             }
             ReceiveResponse(mainSocket);
             OutputText = "Connected";
+            pinger = new Pinger(IPAddress.Parse(IP), 1000);
+            pinger.EndPointDisonnected += Pinger_EndPointDisonnected;
+            //pinger.StartPinging();
+        }
+
+        private void Pinger_EndPointDisonnected(object sender, EventArgs e)
+        {
+            CloseConnection();
         }
 
         public void SendString(string stringToSend)
@@ -65,11 +73,13 @@ namespace TCPConnection
             }
             catch (SocketException)
             {
+                //CloseConnection();
                 OutputText = "Unable to send string (SocketException)";
                 return;
             }
             catch (ObjectDisposedException)
             {
+                //CloseConnection();
                 OutputText = "Unable to send string (SocketException)";
                 return;
             }
@@ -113,8 +123,15 @@ namespace TCPConnection
             }
             byte[] tempBuffer = new byte[receivedBytesCount];
             Array.Copy(incomingBuffer, tempBuffer, receivedBytesCount);
-            string text = Encoding.ASCII.GetString(tempBuffer);
-            IncomingText = text;
+            List<char> text = new List<char>();
+            //string text = Encoding.ASCII.GetString(tempBuffer);
+            //IncomingText = text;
+            foreach (var item in tempBuffer)
+            {
+                text.Add(item.ToString()[0]);
+            }
+            char[] textArray = text.ToArray();
+            IncomingText = new string(textArray);
             OnMessageReceived(currentSocket, EventArgs.Empty);
             ReceiveResponse(currentSocket);
         }
@@ -138,12 +155,18 @@ namespace TCPConnection
             mainSocket.Shutdown(SocketShutdown.Both);
             mainSocket.Disconnect(false);
             OnDisconnected(this, EventArgs.Empty);
+            pinger.StopPinging();
         }
 
         protected void CloseConnection(string textToDisplay)
         {
             CloseConnection();
             OutputText = textToDisplay;
+        }
+
+        public void UpateConnection()
+        {
+            IsConnected = mainSocket.Connected;
         }
 
         public event EventHandler MessageReceived;
