@@ -40,6 +40,17 @@ namespace TCPClientApplication
                     if (!client.IsConnected) break;
                     text = Console.ReadLine();
                     if (text == "exit") break;
+                    if (text == "time")
+                    {
+                        byte[] initialBuffer = new byte[] {0x02, 0x00, 0x09, 0xFF, 0x22, 0x00, 0xFF};
+                        ushort crc = HexaCommands.CalcCRC16(initialBuffer);
+                        //byte[] crcByte = BitConverter.GetBytes(crc);
+                        byte[] crcByte = new byte[] { 0x79, 0x69 };
+                        byte[] finalBuffer = new byte[initialBuffer.Length + crcByte.Length];
+                        Array.Copy(initialBuffer, finalBuffer, initialBuffer.Length);
+                        Array.Copy(crcByte, 0, finalBuffer, initialBuffer.Length, crcByte.Length);
+                        client.SendBytes(finalBuffer);
+                    }
                     else
                     {
                         client.SendString(text);

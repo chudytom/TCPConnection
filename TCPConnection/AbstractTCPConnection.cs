@@ -39,6 +39,7 @@ namespace TCPConnection
 
         protected void ConnectCallback(IAsyncResult AR)
         {
+            //Here throws an exception when not able to connect
             try
             {
                 mainSocket.EndConnect(AR);
@@ -67,9 +68,14 @@ namespace TCPConnection
         public void SendString(string stringToSend)
         {
             byte[] outgoingBuffer = Encoding.ASCII.GetBytes(stringToSend);
+            SendBytes(outgoingBuffer);
+        }
+
+        public void SendBytes(byte[] bytesToSend)
+        {
             try
             {
-                mainSocket?.Send(outgoingBuffer, 0, outgoingBuffer.Length, SocketFlags.None);
+                mainSocket?.Send(bytesToSend, 0, bytesToSend.Length, SocketFlags.None);
             }
             catch (SocketException)
             {
@@ -84,6 +90,7 @@ namespace TCPConnection
                 return;
             }
         }
+
         /// <summary>
         /// BeginReceive method with exception handling
         /// </summary>
